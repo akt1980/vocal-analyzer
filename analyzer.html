@@ -475,6 +475,7 @@
     #player { flex-wrap: wrap; }
   }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -569,8 +570,8 @@
 
     <!-- メール登録 -->
     <div id="email-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
-      <div style="font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:6px;">SAVE RESULT</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6;">診断結果をメールで受け取る（任意）。<br>aktMuseからのお知らせもお届けします。</div>
+      <div style="font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:6px;">CONTACT</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6;">診断結果をaktMuseに送信して、フィードバックをもらう（任意）。<br>お知らせの受け取りにも使えます。</div>
       <div style="display:flex;gap:8px;">
         <input type="email" id="email-input" placeholder="メールアドレス（任意）"
                style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:var(--font);outline:none;">
@@ -623,8 +624,6 @@ const sCtx = sCanvas.getContext('2d');
 
 let audioCtx, analyser, source, buffer;
 let playing = false, startTime = 0, pauseAt = 0, animId;
-let resultShown = false;
-let accLow=0, accMid=0, accHigh=0, accFrames=0;
 
 function fmtTime(s) {
   const m = Math.floor(s/60);
@@ -782,8 +781,9 @@ function animate() {
   document.getElementById('band-ratio').textContent=
     Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
 
-  if(peakVal>20 && !resultShown){
-    accLow+=low; accMid+=mid; accHigh+=high; accFrames++;
+  if(peakVal>20){
+    commentEl.innerHTML=getComment(peakIdx,low,mid,high);
+    commentEl.classList.add('show');
   }
 
   if(playing&&buffer){
@@ -804,8 +804,6 @@ function loadFile(file) {
     analyser.connect(audioCtx.destination);
   }
   filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
-  resultShown = false;
-  accLow=0; accMid=0; accHigh=0; accFrames=0;
   player.classList.add('show');
   viz.classList.add('show');
   metrics.classList.add('show');
@@ -839,12 +837,6 @@ function play() {
       btnPlay.classList.remove('primary');
     }
     source.disconnect();
-    // 再生終了時に全体集計で判定
-    if(!resultShown && accFrames>0){
-      resultShown=true;
-      commentEl.innerHTML=getComment(0, accLow/accFrames, accMid/accFrames, accHigh/accFrames);
-      commentEl.classList.add('show');
-    }
   };
   animate();
 }
@@ -877,8 +869,6 @@ function stop() {
   document.getElementById('result-card').className = '';
   document.getElementById('share-panel').style.display = 'none';
   document.getElementById('email-msg').style.display = 'none';
-  resultShown = false;
-  accLow=0; accMid=0; accHigh=0; accFrames=0;
   sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
 }
 
@@ -1084,9 +1074,13 @@ function stopMic(doJudge=false){
   }
 }
 
-// ---- 設定（後で差し替え） ----
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgazvpk';
+// ---- EmailJS設定 ----
+const EMAILJS_SERVICE_ID  = 'service_7dtjvpe';
+const EMAILJS_TEMPLATE_ID = 'template_d0h1whn';
+const EMAILJS_PUBLIC_KEY  = '-uQSHHs0d-dt0fwje';
 const DISCORD_URL = 'https://discord.gg/97bVp3fbX9';
+
+emailjs.init(EMAILJS_PUBLIC_KEY);
 
 // DiscordボタンのhrefをJSで設定
 document.getElementById('btn-discord').href = DISCORD_URL;
@@ -1101,7 +1095,7 @@ document.getElementById('btn-x-share').addEventListener('click', () => {
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener');
 });
 
-// メール送信
+// メール送信（EmailJS）
 document.getElementById('btn-email-send').addEventListener('click', async () => {
   const email = document.getElementById('email-input').value.trim();
   const msgEl = document.getElementById('email-msg');
@@ -1115,58 +1109,40 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
     return;
   }
 
-  // 送信中表示
   sendBtn.textContent = '送信中…';
   sendBtn.disabled = true;
 
   const t = currentResult;
   const micName = TYPE_DATA[t.type]?.mic?.name || '';
-  const micUrl  = TYPE_DATA[t.type]?.mic?.amazonUrl || '';
-  const body = {
-    email,
-    _replyto: email,
-    _subject: '【aktMuse声質診断】あなたの診断結果',
-    message:
-      `━━ あなたの声質診断結果 ━━\n\n` +
-      `診断タイプ：Type ${t.type}（${t.title}）\n` +
-      `低域 ${t.lo}%  /  中域 ${t.mid}%  /  高域 ${t.hi}%\n\n` +
-      `推奨マイク：${micName}\n\n` +
-      `次のステップとして、歌のピッチ・リズムを診断する「AI歌診断」もお試しください。\n\n` +
-      `akt Muse Studio`
-  };
 
   try {
-    const res = await fetch(FORMSPREE_ENDPOINT, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body: JSON.stringify(body)
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      user_email: email,
+      voice_type: `Type ${t.type}（${t.title}）`,
+      lo: t.lo,
+      mid: t.mid,
+      hi: t.hi,
+      mic_name: micName
     });
-    if(res.ok) {
-      // 完了UIに差し替え
-      wrap.innerHTML =
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
-          '<div style="width:28px;height:28px;border-radius:50%;background:rgba(29,185,84,0.15);border:1px solid rgba(29,185,84,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:13px;font-weight:500;color:var(--text);">送信完了しました</div>' +
-            '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);">' + email + '</div>' +
-          '</div>' +
+
+    wrap.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+        '<div style="width:28px;height:28px;border-radius:50%;background:rgba(29,185,84,0.15);border:1px solid rgba(29,185,84,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
         '</div>' +
-        '<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">診断結果と推奨マイク情報をお送りしました。<br>次は歌のピッチ・リズムをAIで診断してみましょう。</div>' +
-        '<a href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank" rel="noopener" ' +
-           'style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;' +
-           'color:var(--info);border:1px solid rgba(74,158,255,0.35);border-radius:6px;' +
-           'padding:7px 14px;text-decoration:none;transition:background 0.15s;" ' +
-           'onmouseover="this.style.background=\'rgba(74,158,255,0.08)\'" ' +
-           'onmouseout="this.style.background=\'transparent\'">' +
-          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-          'AI歌診断を試してみる →' +
-        '</a>';
-    } else {
-      throw new Error();
-    }
-  } catch {
+        '<div>' +
+          '<div style="font-size:13px;font-weight:500;color:var(--text);">送信完了しました</div>' +
+          '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);">' + email + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">診断結果をaktMuseに送信しました。<br>次は歌のピッチ・リズムをAIで診断してみましょう。</div>' +
+      '<a href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank" rel="noopener" ' +
+         'style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;' +
+         'color:var(--info);border:1px solid rgba(74,158,255,0.35);border-radius:6px;' +
+         'padding:7px 14px;text-decoration:none;" >' +
+        'AI歌診断を試してみる →' +
+      '</a>';
+  } catch(err) {
     sendBtn.textContent = '送信';
     sendBtn.disabled = false;
     msgEl.style.display = 'block';
