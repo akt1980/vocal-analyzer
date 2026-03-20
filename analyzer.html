@@ -624,6 +624,7 @@ const sCtx = sCanvas.getContext('2d');
 let audioCtx, analyser, source, buffer;
 let playing = false, startTime = 0, pauseAt = 0, animId;
 let resultShown = false;
+let accLow=0, accMid=0, accHigh=0, accFrames=0;
 
 function fmtTime(s) {
   const m = Math.floor(s/60);
@@ -782,9 +783,7 @@ function animate() {
     Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
 
   if(peakVal>20 && !resultShown){
-    resultShown=true;
-    commentEl.innerHTML=getComment(peakIdx,low,mid,high);
-    commentEl.classList.add('show');
+    accLow+=low; accMid+=mid; accHigh+=high; accFrames++;
   }
 
   if(playing&&buffer){
@@ -806,6 +805,7 @@ function loadFile(file) {
   }
   filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
   resultShown = false;
+  accLow=0; accMid=0; accHigh=0; accFrames=0;
   player.classList.add('show');
   viz.classList.add('show');
   metrics.classList.add('show');
@@ -839,6 +839,12 @@ function play() {
       btnPlay.classList.remove('primary');
     }
     source.disconnect();
+    // 再生終了時に全体集計で判定
+    if(!resultShown && accFrames>0){
+      resultShown=true;
+      commentEl.innerHTML=getComment(0, accLow/accFrames, accMid/accFrames, accHigh/accFrames);
+      commentEl.classList.add('show');
+    }
   };
   animate();
 }
@@ -872,6 +878,7 @@ function stop() {
   document.getElementById('share-panel').style.display = 'none';
   document.getElementById('email-msg').style.display = 'none';
   resultShown = false;
+  accLow=0; accMid=0; accHigh=0; accFrames=0;
   sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
 }
 
