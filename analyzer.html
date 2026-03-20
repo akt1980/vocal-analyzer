@@ -1105,18 +1105,42 @@ document.getElementById('btn-x-share').addEventListener('click', () => {
 document.getElementById('btn-email-send').addEventListener('click', async () => {
   const email = document.getElementById('email-input').value.trim();
   const msgEl = document.getElementById('email-msg');
+  const sendBtn = document.getElementById('btn-email-send');
+  const wrap = document.getElementById('email-form-wrap');
+
   if(!email || !email.includes('@')) {
     msgEl.style.display = 'block';
     msgEl.style.color = 'var(--warn)';
     msgEl.textContent = 'メールアドレスを正しく入力してください。';
     return;
   }
+
+  // 送信中表示
+  sendBtn.textContent = '送信中…';
+  sendBtn.disabled = true;
+
   const t = currentResult;
+  const micName = TYPE_DATA[t.type]?.mic?.name || '';
+  const micUrl  = TYPE_DATA[t.type]?.mic?.amazonUrl || '';
   const body = {
     email,
-    _subject: '【aktMuse声質診断】あなたの結果',
-    message: `診断タイプ：Type ${t.type}（${t.title}）\n低域 ${t.lo}% / 中域 ${t.mid}% / 高域 ${t.hi}%\n推奨マイク：${TYPE_DATA[t.type]?.mic?.name || ''}`
+    _replyto: email,
+    _subject: '【aktMuse声質診断】あなたの診断結果',
+    message:
+      `━━ あなたの声質診断結果 ━━\n\n` +
+      `診断タイプ：Type ${t.type}（${t.title}）\n` +
+      `低域 ${t.lo}%  /  中域 ${t.mid}%  /  高域 ${t.hi}%\n\n` +
+      `推奨マイク：${micName}\n` +
+      `Amazon：${micUrl}\n\n` +
+      `━━ 次のステップ ━━\n` +
+      `歌のピッチ・リズムをAIで診断する「AI歌診断」もお試しください。\n` +
+      `https://huggingface.co/spaces/aktmix/v-diagnosis\n\n` +
+      `━━━━━━━━━━━━━━━━━━━\n` +
+      `akt Muse Studio\n` +
+      `https://aktmix3.wixsite.com/website\n` +
+      `X: https://x.com/aktmix`
   };
+
   try {
     const res = await fetch(FORMSPREE_ENDPOINT, {
       method:'POST',
@@ -1124,14 +1148,33 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
       body: JSON.stringify(body)
     });
     if(res.ok) {
-      msgEl.style.display = 'block';
-      msgEl.style.color = 'var(--accent)';
-      msgEl.textContent = '送信しました。結果をメールでお届けします。';
-      document.getElementById('email-input').value = '';
+      // 完了UIに差し替え
+      wrap.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:rgba(29,185,84,0.15);border:1px solid rgba(29,185,84,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:13px;font-weight:500;color:var(--text);">送信完了しました</div>' +
+            '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);">' + email + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">診断結果と推奨マイク情報をお送りしました。<br>次は歌のピッチ・リズムをAIで診断してみましょう。</div>' +
+        '<a href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank" rel="noopener" ' +
+           'style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;' +
+           'color:var(--info);border:1px solid rgba(74,158,255,0.35);border-radius:6px;' +
+           'padding:7px 14px;text-decoration:none;transition:background 0.15s;" ' +
+           'onmouseover="this.style.background=\'rgba(74,158,255,0.08)\'" ' +
+           'onmouseout="this.style.background=\'transparent\'">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          'AI歌診断を試してみる →' +
+        '</a>';
     } else {
       throw new Error();
     }
   } catch {
+    sendBtn.textContent = '送信';
+    sendBtn.disabled = false;
     msgEl.style.display = 'block';
     msgEl.style.color = 'var(--warn)';
     msgEl.textContent = '送信に失敗しました。しばらくしてからお試しください。';
