@@ -660,7 +660,8 @@ const TYPE_DATA = {
       name: 'audio-technica AT4040',
       price: '約35,000円',
       reason: '高域がマイルドで中低域に厚みがあり、サ行の刺さりを自然に抑えてくれます。歌い手の間で「誰にでも合う」と言われる定番機種。',
-      amazonUrl: 'https://amzn.to/40ED1iX'
+      amazonUrl: 'https://amzn.to/40ED1iX',
+      soundhouseUrl: 'https://www.soundhouse.co.jp/products/detail/item/16136/'
     },
     advice: '<strong>録音のポイント：</strong>マイクとの距離は拳1個分を目安に。近づきすぎると高域の刺さりがさらに強調されます。ゲインは -6dB〜-3dB の余裕を持たせてください。'
   },
@@ -673,7 +674,8 @@ const TYPE_DATA = {
       name: 'AKG C214',
       price: '約32,000〜38,000円',
       reason: '中高域にハリがあり、太い声でも輪郭がしっかり前に出ます。男性ボーカルとの相性が特に高いと評判のスタジオ定番機種。',
-      amazonUrl: 'https://amzn.to/3PvaAS0'
+      amazonUrl: 'https://amzn.to/3PvaAS0',
+      soundhouseUrl: 'https://www.soundhouse.co.jp/products/detail/item/126591/'
     },
     advice: '<strong>録音のポイント：</strong>低域の膨らみを防ぐためにマイクとの距離を少し広めにとりましょう。フォーマットは必ず WAV 24bit/48kHz で。'
   },
@@ -686,7 +688,8 @@ const TYPE_DATA = {
       name: 'LEWITT LCT 440 PURE',
       price: '約30,000〜35,000円',
       reason: '極めて低い自己ノイズと高い感度で、吐息・囁きの空気感をそのまま収音できます。繊細な声質にこの価格帯のベスト候補。',
-      amazonUrl: 'https://amzn.to/4bG8PZN'
+      amazonUrl: 'https://amzn.to/4bG8PZN',
+      soundhouseUrl: 'https://www.soundhouse.co.jp/products/detail/item/236897/'
     },
     advice: '<strong>録音のポイント：</strong>静音環境の確保が最優先です。エアコンや換気扇はオフに。感度が高いマイクほど環境ノイズも拾いやすくなります。'
   }
@@ -733,6 +736,7 @@ function getComment(peakIdx, low, mid, high) {
           '<div class="rc-mic-price">' + t.mic.price + '</div>' +
           '<div class="rc-mic-reason">' + t.mic.reason + '</div>' +
           '<a class="rc-amz-btn" href="' + t.mic.amazonUrl + '" target="_blank" rel="noopener">&#x1F6CD; Amazonで見る</a>' +
+          '<a class="rc-amz-btn" href="' + t.mic.soundhouseUrl + '" target="_blank" rel="noopener" style="background:#1a56a0;margin-left:6px;">&#x1F3B5; サウンドハウス</a>' +
         '</div>' +
       '</div>' +
       '<div class="rc-advice">' + t.advice + '</div>' +
@@ -1114,6 +1118,7 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
 
   const t = currentResult;
   const micName = TYPE_DATA[t.type]?.mic?.name || '';
+  const micSoundhouse = TYPE_DATA[t.type]?.mic?.soundhouseUrl || '';
 
   try {
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
@@ -1122,7 +1127,8 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
       lo: t.lo,
       mid: t.mid,
       hi: t.hi,
-      mic_name: micName
+      mic_name: micName,
+      mic_soundhouse: micSoundhouse
     });
 
     wrap.innerHTML =
