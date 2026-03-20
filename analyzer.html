@@ -1118,6 +1118,7 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
 
   const t = currentResult;
   const micName = TYPE_DATA[t.type]?.mic?.name || '';
+  const micAmazon = TYPE_DATA[t.type]?.mic?.amazonUrl || '';
   const micSoundhouse = TYPE_DATA[t.type]?.mic?.soundhouseUrl || '';
 
   try {
@@ -1128,6 +1129,7 @@ document.getElementById('btn-email-send').addEventListener('click', async () => 
       mid: t.mid,
       hi: t.hi,
       mic_name: micName,
+      mic_amazon: micAmazon,
       mic_soundhouse: micSoundhouse
     });
 
