@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Spectrum Analyzer | aktMuse</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --bg2: #16181c;
+    --bg3: #1e2026;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0ee;
+    --text2: #888884;
+    --text3: #555552;
+    --accent: #1DB954;
+    --accent2: #0f8f3e;
+    --warn: #e8a838;
+    --info: #4a9eff;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--text2);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent); }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 400;
+    font-family: var(--mono);
+    color: var(--accent);
+    border: 1px solid var(--accent2);
+    border-radius: 4px;
+    padding: 3px 8px;
+    background: rgba(29,185,84,0.06);
+  }
+
+  main {
+    flex: 1;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  h1 {
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+
+  /* dropzone */
+  #dropzone {
+    border: 1px dashed var(--border2);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--bg2);
+    margin-bottom: 1.5rem;
+  }
+  #dropzone:hover, #dropzone.drag {
+    border-color: var(--accent);
+    background: rgba(29,185,84,0.04);
+  }
+  #dropzone input { display: none; }
+  .drop-icon {
+    width: 40px; height: 40px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border2);
+  }
+  .drop-icon svg { width: 18px; height: 18px; stroke: var(--text2); fill: none; }
+  .drop-label { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
+  .drop-sub { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+  /* player bar */
+  #player {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+  }
+  #player.show { display: flex; }
+  #filename {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: var(--mono);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .btn {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg3); border-color: var(--border2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+  .btn.primary:hover { background: #23d45e; }
+  #time { font-family: var(--mono); font-size: 12px; color: var(--text3); white-space: nowrap; }
+
+  /* viz area */
+  #viz { display: none; }
+  #viz.show { display: block; }
+
+  .viz-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 8px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+  }
+  #waveform-canvas { height: 56px; margin-bottom: 1rem; }
+  #spectrum-canvas { height: 220px; margin-bottom: 6px; }
+
+  #band-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  #band-labels span {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* metrics */
+  #metrics {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  #metrics.show { display: grid; }
+
+  .metric {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+  .metric-value.accent { color: var(--accent); }
+
+  /* comment */
+  #comment {
+    display: none;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--bg2);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+  #comment.show { display: block; }
+  #comment strong { color: var(--text); font-weight: 500; }
+  #comment .sub {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* result card */
+  #result-card {
+    display: none;
+    margin-top: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+  }
+  #result-card.show { display: block; }
+  .rc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rc-type-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .type-a .rc-type-badge { background: rgba(232,168,56,0.15); color: var(--warn); border: 1px solid rgba(232,168,56,0.3); }
+  .type-b .rc-type-badge { background: rgba(29,185,84,0.1); color: var(--accent); border: 1px solid rgba(29,185,84,0.25); }
+  .type-c .rc-type-badge { background: rgba(74,158,255,0.1); color: var(--info); border: 1px solid rgba(74,158,255,0.25); }
+  .rc-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+  .rc-body { padding: 14px 20px; }
+  .rc-mic {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .rc-mic-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .type-a .rc-mic-icon { background: rgba(232,168,56,0.12); }
+  .type-b .rc-mic-icon { background: rgba(29,185,84,0.1); }
+  .type-c .rc-mic-icon { background: rgba(74,158,255,0.1); }
+  .rc-mic-info { flex: 1; }
+  .rc-mic-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    margin-bottom: 3px;
+  }
+  .rc-mic-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .rc-mic-price {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .rc-mic-reason {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .rc-advice {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.75;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 2px solid var(--border2);
+    background: var(--bg3);
+  }
+  .rc-advice strong { color: var(--text); font-weight: 500; }
+
+  /* link cards */
+  .link-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 2rem;
+  }
+  @media (max-width: 480px) { .link-cards { grid-template-columns: 1fr; } }
+  .link-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .link-card:hover { border-color: var(--border2); background: var(--bg3); }
+  .link-card-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .link-card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .link-card-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .link-card-arrow {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+  .link-card.accent-hp { border-left: 3px solid var(--accent); }
+  .link-card.accent-diag { border-left: 3px solid var(--info); }
+  .link-card.accent-hp .link-card-title { color: var(--accent); }
+  .link-card.accent-diag .link-card-title { color: var(--info); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+  footer a { color: var(--text2); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  @media (max-width: 480px) {
+    #metrics { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 22px; }
+    #player { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">akt<span>Muse</span></div>
+  <div class="badge">Vocal Analyzer</div>
+</header>
+
+<main>
+  <h1>あなたの声を、<em>可視化</em>する。</h1>
+  <p class="subtitle">音声ファイルをアップロードすると、周波数スペクトラムと声質の傾向を分析します。</p>
+
+  <div id="dropzone" onclick="document.getElementById('fileinput').click()">
+    <input type="file" id="fileinput" accept="audio/*">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+      </svg>
+    </div>
+    <p class="drop-label">ファイルをドロップ、またはクリックして選択</p>
+    <p class="drop-sub">MP3 / WAV / M4A</p>
+  </div>
+
+  <div id="player">
+    <span id="filename"></span>
+    <button class="btn primary" id="btn-play">再生</button>
+    <button class="btn" id="btn-stop">停止</button>
+    <span id="time">0:00 / 0:00</span>
+  </div>
+
+  <div id="viz">
+    <div class="viz-label">Waveform</div>
+    <canvas id="waveform-canvas"></canvas>
+    <div class="viz-label">Frequency Spectrum</div>
+    <canvas id="spectrum-canvas"></canvas>
+    <div id="band-labels">
+      <span>60Hz</span><span>120Hz</span><span>250Hz</span><span>500Hz</span>
+      <span>1kHz</span><span>2kHz</span><span>4kHz</span><span>8kHz</span><span>16kHz</span>
+    </div>
+  </div>
+
+  <div id="metrics">
+    <div class="metric">
+      <div class="metric-label">PEAK BAND</div>
+      <div class="metric-value accent" id="peak-band">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">LEVEL</div>
+      <div class="metric-value" id="level-val">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">LO / MID / HI</div>
+      <div class="metric-value" id="band-ratio">—</div>
+    </div>
+  </div>
+
+  <div id="comment"></div>
+  <div id="result-card"></div>
+
+  <div class="link-cards">
+    <a class="link-card accent-hp" href="https://aktmix3.wixsite.com/website" target="_blank">
+      <div class="link-card-label">制作者</div>
+      <div class="link-card-title">akt Muse Studio</div>
+      <div class="link-card-desc">ディレクションからMIXまで一任できる音楽スタジオ。歌い手の表現力を引き出すコーチング型サービス。</div>
+      <div class="link-card-arrow">→ 公式サイトへ</div>
+    </a>
+    <a class="link-card accent-diag" href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank">
+      <div class="link-card-label">関連ツール</div>
+      <div class="link-card-title">V診断</div>
+      <div class="link-card-desc">声質タイプをさらに詳しく診断。このアナライザーと組み合わせることで、自分の声の特性をより深く把握できます。</div>
+      <div class="link-card-arrow">→ 診断を試す</div>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <a href="https://x.com/aktmix" target="_blank">@aktmix</a> &nbsp;·&nbsp;
+  powered by aktMuse
+</footer>
+
+<script>
+const BANDS = [60,120,250,500,1000,2000,4000,8000,16000];
+const BAND_NAMES = ['60Hz','120Hz','250Hz','500Hz','1kHz','2kHz','4kHz','8kHz','16kHz'];
+
+const dropzone = document.getElementById('dropzone');
+const fileinput = document.getElementById('fileinput');
+const player = document.getElementById('player');
+const btnPlay = document.getElementById('btn-play');
+const btnStop = document.getElementById('btn-stop');
+const filenameEl = document.getElementById('filename');
+const timeEl = document.getElementById('time');
+const viz = document.getElementById('viz');
+const metrics = document.getElementById('metrics');
+const commentEl = document.getElementById('comment');
+const wCanvas = document.getElementById('waveform-canvas');
+const sCanvas = document.getElementById('spectrum-canvas');
+const wCtx = wCanvas.getContext('2d');
+const sCtx = sCanvas.getContext('2d');
+
+let audioCtx, analyser, source, buffer;
+let playing = false, startTime = 0, pauseAt = 0, animId;
+
+function fmtTime(s) {
+  const m = Math.floor(s/60);
+  return m + ':' + Math.floor(s%60).toString().padStart(2,'0');
+}
+
+function resize() {
+  const w = sCanvas.offsetWidth;
+  wCanvas.width = w; wCanvas.height = 56;
+  sCanvas.width = w; sCanvas.height = 220;
+}
+
+function drawWaveform(buf) {
+  const data = buf.getChannelData(0);
+  const w = wCanvas.width, h = wCanvas.height;
+  wCtx.clearRect(0,0,w,h);
+  const step = Math.ceil(data.length/w);
+  for(let x=0;x<w;x++){
+    let min=1,max=-1;
+    for(let j=0;j<step;j++){const v=data[x*step+j]||0;if(v<min)min=v;if(v>max)max=v;}
+    const y1=Math.round((1+min)*h/2), y2=Math.round((1+max)*h/2);
+    wCtx.fillStyle='#1DB954';
+    wCtx.fillRect(x, y1, 1, Math.max(1, y2-y1));
+  }
+}
+
+const TYPE_DATA = {
+  A: {
+    label: 'Type A',
+    title: '高音域・明るい声質',
+    cssClass: 'type-a',
+    icon: '✦',
+    mic: {
+      name: 'audio-technica AT4040',
+      price: '約35,000円',
+      reason: '高域がマイルドで中低域に厚みがあり、サ行の刺さりを自然に抑えてくれます。歌い手の間で「誰にでも合う」と言われる定番機種。'
+    },
+    advice: '<strong>録音のポイント：</strong>マイクとの距離は拳1個分を目安に。近づきすぎると高域の刺さりがさらに強調されます。ゲインは -6dB〜-3dB の余裕を持たせてください。'
+  },
+  B: {
+    label: 'Type B',
+    title: '低音域・太い声質',
+    cssClass: 'type-b',
+    icon: '◆',
+    mic: {
+      name: 'AKG C214',
+      price: '約32,000〜38,000円',
+      reason: '中高域にハリがあり、太い声でも輪郭がしっかり前に出ます。男性ボーカルとの相性が特に高いと評判のスタジオ定番機種。'
+    },
+    advice: '<strong>録音のポイント：</strong>低域の膨らみを防ぐためにマイクとの距離を少し広めにとりましょう。フォーマットは必ず WAV 24bit/48kHz で。'
+  },
+  C: {
+    label: 'Type C',
+    title: 'ウィスパー・繊細な声質',
+    cssClass: 'type-c',
+    icon: '◇',
+    mic: {
+      name: 'LEWITT LCT 440 PURE',
+      price: '約30,000〜35,000円',
+      reason: '極めて低い自己ノイズと高い感度で、吐息・囁きの空気感をそのまま収音できます。繊細な声質にこの価格帯のベスト候補。'
+    },
+    advice: '<strong>録音のポイント：</strong>静音環境の確保が最優先です。エアコンや換気扇はオフに。感度が高いマイクほど環境ノイズも拾いやすくなります。'
+  }
+};
+
+function detectType(lp, mp, hp) {
+  if (hp >= 38) return 'A';
+  if (lp >= 40) return 'B';
+  if (lp < 30 && mp < 50 && hp < 35) return 'C';
+  if (lp >= 35) return 'B';
+  if (hp >= 30) return 'A';
+  return 'C';
+}
+
+function getComment(peakIdx, low, mid, high) {
+  const total = low+mid+high||1;
+  const lp=Math.round(low/total*100), mp=Math.round(mid/total*100), hp=Math.round(high/total*100);
+  let txt = '';
+  if(lp>45) txt='<strong>低域が厚め。</strong>胸声が豊かに出ています。ブレスと一緒に音が膨らみすぎていないか確認してみましょう。';
+  else if(hp>40) txt='<strong>高域が強め。</strong>明るく抜けのある声質です。力みがあると刺さりやすいので、息のサポートを意識してみてください。';
+  else if(mp>55) txt='<strong>中域が豊か。</strong>声の芯がしっかり出ています。この中域の使い方が、表現の幅を広げるカギになります。';
+  else txt='<strong>バランスのよい声質です。</strong>低・中・高域が均等に出ています。あとは表現の意図によって帯域を意識的にコントロールしていきましょう。';
+
+  const typeKey = detectType(lp, mp, hp);
+  const t = TYPE_DATA[typeKey];
+  const card = document.getElementById('result-card');
+  card.className = 'show ' + t.cssClass;
+  card.innerHTML =
+    '<div class="rc-header">' +
+      '<span class="rc-type-badge">' + t.label + '</span>' +
+      '<span class="rc-title">' + t.title + '</span>' +
+    '</div>' +
+    '<div class="rc-body">' +
+      '<div class="rc-mic">' +
+        '<div class="rc-mic-icon">' + t.icon + '</div>' +
+        '<div class="rc-mic-info">' +
+          '<div class="rc-mic-label">推奨マイク</div>' +
+          '<div class="rc-mic-name">' + t.mic.name + '</div>' +
+          '<div class="rc-mic-price">' + t.mic.price + '</div>' +
+          '<div class="rc-mic-reason">' + t.mic.reason + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rc-advice">' + t.advice + '</div>' +
+    '</div>';
+
+  return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%</span>';
+}
+
+function animate() {
+  if(!analyser) return;
+  animId = requestAnimationFrame(animate);
+  const freq = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freq);
+  const w = sCanvas.width, h = sCanvas.height;
+  sCtx.clearRect(0,0,w,h);
+  const barW = Math.floor(w/BANDS.length);
+  const nyq = audioCtx.sampleRate/2;
+  let peakIdx=0, peakVal=0, low=0, mid=0, high=0, lvlSum=0;
+
+  BANDS.forEach((hz,i)=>{
+    const bin=Math.round(hz/nyq*analyser.frequencyBinCount);
+    const nextBin=i<BANDS.length-1?Math.round(BANDS[i+1]/nyq*analyser.frequencyBinCount):analyser.frequencyBinCount;
+    let sum=0,cnt=0;
+    for(let b=bin;b<nextBin&&b<freq.length;b++){sum+=freq[b];cnt++;}
+    const avg=cnt?sum/cnt:0;
+    lvlSum+=avg;
+    const ratio=avg/255;
+    const barH=Math.round(ratio*h);
+    const x=i*barW+2, bw=barW-4;
+    const r=Math.round(29+(220-29)*ratio);
+    const g=Math.round(185+(100-185)*ratio);
+    const bl=Math.round(84+(20-84)*ratio);
+    sCtx.fillStyle=`rgba(${r},${g},${bl},0.9)`;
+    sCtx.beginPath();
+    sCtx.roundRect(x, h-barH, bw, Math.max(barH,2), [3,3,0,0]);
+    sCtx.fill();
+    if(avg>peakVal){peakVal=avg;peakIdx=i;}
+    if(i<3)low+=avg; else if(i<6)mid+=avg; else high+=avg;
+  });
+
+  const lvlDb=Math.round(20*Math.log10(lvlSum/BANDS.length/255+0.001));
+  document.getElementById('peak-band').textContent=BAND_NAMES[peakIdx];
+  document.getElementById('level-val').textContent=lvlDb+' dB';
+  const total=low+mid+high||1;
+  document.getElementById('band-ratio').textContent=
+    Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
+
+  if(peakVal>20){
+    commentEl.innerHTML=getComment(peakIdx,low,mid,high);
+    commentEl.classList.add('show');
+  }
+
+  if(playing&&buffer){
+    const elapsed=Math.min(audioCtx.currentTime-startTime, buffer.duration);
+    timeEl.textContent=fmtTime(elapsed)+' / '+fmtTime(buffer.duration);
+    drawWaveform(buffer);
+    wCtx.fillStyle='rgba(29,185,84,0.15)';
+    wCtx.fillRect(0,0,Math.round(elapsed/buffer.duration*wCanvas.width),wCanvas.height);
+  }
+}
+
+function loadFile(file) {
+  if(!audioCtx) audioCtx=new AudioContext();
+  analyser=audioCtx.createAnalyser();
+  analyser.fftSize=2048;
+  analyser.smoothingTimeConstant=0.82;
+  analyser.connect(audioCtx.destination);
+  filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
+  player.classList.add('show');
+  viz.classList.add('show');
+  metrics.classList.add('show');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    audioCtx.decodeAudioData(e.target.result,buf=>{
+      buffer=buf;
+      resize();
+      drawWaveform(buf);
+      timeEl.textContent='0:00 / '+fmtTime(buf.duration);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function play() {
+  if(!buffer||playing) return;
+  source=audioCtx.createBufferSource();
+  source.buffer=buffer;
+  source.connect(analyser);
+  source.start(0,pauseAt);
+  startTime=audioCtx.currentTime-pauseAt;
+  playing=true;
+  btnPlay.textContent='一時停止';
+  btnPlay.classList.add('primary');
+  source.onended=()=>{if(playing){playing=false;pauseAt=0;btnPlay.textContent='再生';}};
+  animate();
+}
+
+function pause() {
+  if(!playing) return;
+  pauseAt=audioCtx.currentTime-startTime;
+  source.stop(); playing=false;
+  btnPlay.textContent='再生';
+  cancelAnimationFrame(animId);
+}
+
+function stop() {
+  if(source&&playing){source.stop();playing=false;}
+  pauseAt=0; btnPlay.textContent='再生';
+  cancelAnimationFrame(animId);
+  if(buffer){resize();drawWaveform(buffer);}
+  timeEl.textContent='0:00 / '+fmtTime(buffer?.duration||0);
+  commentEl.classList.remove('show');
+  document.getElementById('result-card').className = '';
+  sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
+}
+
+btnPlay.onclick=()=>playing?pause():play();
+btnStop.onclick=stop;
+fileinput.onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);};
+dropzone.ondragover=e=>{e.preventDefault();dropzone.classList.add('drag');};
+dropzone.ondragleave=()=>dropzone.classList.remove('drag');
+dropzone.ondrop=e=>{e.preventDefault();dropzone.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
+
+// waveformクリック・ドラッグで再生位置変更
+wCanvas.style.cursor='pointer';
+let isDragging=false;
+
+function seekTo(e){
+  if(!buffer) return;
+  const rect=wCanvas.getBoundingClientRect();
+  const clientX=e.touches?e.touches[0].clientX:e.clientX;
+  const ratio=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+  const seekTime=ratio*buffer.duration;
+  const wasPlaying=playing;
+  if(playing){source.stop();playing=false;cancelAnimationFrame(animId);}
+  pauseAt=seekTime;
+  timeEl.textContent=fmtTime(seekTime)+' / '+fmtTime(buffer.duration);
+  resize(); drawWaveform(buffer);
+  wCtx.fillStyle='rgba(29,185,84,0.15)';
+  wCtx.fillRect(0,0,Math.round(ratio*wCanvas.width),wCanvas.height);
+  if(wasPlaying) play();
+}
+
+wCanvas.addEventListener('mousedown',e=>{isDragging=true;seekTo(e);});
+wCanvas.addEventListener('mousemove',e=>{if(isDragging)seekTo(e);});
+wCanvas.addEventListener('mouseup',()=>isDragging=false);
+wCanvas.addEventListener('mouseleave',()=>isDragging=false);
+wCanvas.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e);},{passive:false});
+wCanvas.addEventListener('touchmove',e=>{e.preventDefault();seekTo(e);},{passive:false});
+
+window.addEventListener('resize',resize);
+resize();
+</script>
+</body>
+</html>
