@@ -662,10 +662,12 @@ function animate() {
 
 function loadFile(file) {
   if(!audioCtx) audioCtx=new AudioContext();
-  analyser=audioCtx.createAnalyser();
-  analyser.fftSize=2048;
-  analyser.smoothingTimeConstant=0.82;
-  analyser.connect(audioCtx.destination);
+  if(!analyser){
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=2048;
+    analyser.smoothingTimeConstant=0.82;
+    analyser.connect(audioCtx.destination);
+  }
   filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
   player.classList.add('show');
   viz.classList.add('show');
@@ -692,21 +694,39 @@ function play() {
   playing=true;
   btnPlay.textContent='一時停止';
   btnPlay.classList.add('primary');
-  source.onended=()=>{if(playing){playing=false;pauseAt=0;btnPlay.textContent='再生';}};
+  source.onended=()=>{
+    if(playing){
+      playing=false;
+      pauseAt=0;
+      btnPlay.textContent='再生';
+      btnPlay.classList.remove('primary');
+    }
+    source.disconnect();
+  };
   animate();
 }
 
 function pause() {
   if(!playing) return;
   pauseAt=audioCtx.currentTime-startTime;
-  source.stop(); playing=false;
+  source.stop();
+  source.disconnect();
+  playing=false;
   btnPlay.textContent='再生';
+  btnPlay.classList.remove('primary');
   cancelAnimationFrame(animId);
 }
 
 function stop() {
-  if(source&&playing){source.stop();playing=false;}
-  pauseAt=0; btnPlay.textContent='再生';
+  if(source){
+    if(playing){source.stop();}
+    source.disconnect();
+    source=null;
+  }
+  playing=false;
+  pauseAt=0;
+  btnPlay.textContent='再生';
+  btnPlay.classList.remove('primary');
   cancelAnimationFrame(animId);
   if(buffer){resize();drawWaveform(buffer);}
   timeEl.textContent='0:00 / '+fmtTime(buffer?.duration||0);
