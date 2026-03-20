@@ -239,6 +239,148 @@
     font-family: var(--mono);
   }
 
+  /* result card */
+  #result-card {
+    display: none;
+    margin-top: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+  }
+  #result-card.show { display: block; }
+  .rc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rc-type-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .type-a .rc-type-badge { background: rgba(232,168,56,0.15); color: var(--warn); border: 1px solid rgba(232,168,56,0.3); }
+  .type-b .rc-type-badge { background: rgba(29,185,84,0.1); color: var(--accent); border: 1px solid rgba(29,185,84,0.25); }
+  .type-c .rc-type-badge { background: rgba(74,158,255,0.1); color: var(--info); border: 1px solid rgba(74,158,255,0.25); }
+  .rc-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+  .rc-body { padding: 14px 20px; }
+  .rc-mic {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .rc-mic-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .type-a .rc-mic-icon { background: rgba(232,168,56,0.12); }
+  .type-b .rc-mic-icon { background: rgba(29,185,84,0.1); }
+  .type-c .rc-mic-icon { background: rgba(74,158,255,0.1); }
+  .rc-mic-info { flex: 1; }
+  .rc-mic-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    margin-bottom: 3px;
+  }
+  .rc-mic-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .rc-mic-price {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .rc-mic-reason {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .rc-advice {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.75;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 2px solid var(--border2);
+    background: var(--bg3);
+  }
+  .rc-advice strong { color: var(--text); font-weight: 500; }
+
+  /* link cards */
+  .link-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 2rem;
+  }
+  @media (max-width: 480px) { .link-cards { grid-template-columns: 1fr; } }
+  .link-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .link-card:hover { border-color: var(--border2); background: var(--bg3); }
+  .link-card-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .link-card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .link-card-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .link-card-arrow {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+  .link-card.accent-hp { border-left: 3px solid var(--accent); }
+  .link-card.accent-diag { border-left: 3px solid var(--info); }
+  .link-card.accent-hp .link-card-title { color: var(--accent); }
+  .link-card.accent-diag .link-card-title { color: var(--info); }
+
   footer {
     text-align: center;
     padding: 1.5rem;
@@ -313,6 +455,22 @@
   </div>
 
   <div id="comment"></div>
+  <div id="result-card"></div>
+
+  <div class="link-cards">
+    <a class="link-card accent-hp" href="https://aktmix3.wixsite.com/website" target="_blank">
+      <div class="link-card-label">制作者</div>
+      <div class="link-card-title">akt Muse Studio</div>
+      <div class="link-card-desc">ディレクションからMIXまで一任できる音楽スタジオ。歌い手の表現力を引き出すコーチング型サービス。</div>
+      <div class="link-card-arrow">→ 公式サイトへ</div>
+    </a>
+    <a class="link-card accent-diag" href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank">
+      <div class="link-card-label">関連ツール</div>
+      <div class="link-card-title">V診断</div>
+      <div class="link-card-desc">声質タイプをさらに詳しく診断。このアナライザーと組み合わせることで、自分の声の特性をより深く把握できます。</div>
+      <div class="link-card-arrow">→ 診断を試す</div>
+    </a>
+  </div>
 </main>
 
 <footer>
@@ -367,6 +525,54 @@ function drawWaveform(buf) {
   }
 }
 
+const TYPE_DATA = {
+  A: {
+    label: 'Type A',
+    title: '高音域・明るい声質',
+    cssClass: 'type-a',
+    icon: '✦',
+    mic: {
+      name: 'audio-technica AT4040',
+      price: '約35,000円',
+      reason: '高域がマイルドで中低域に厚みがあり、サ行の刺さりを自然に抑えてくれます。歌い手の間で「誰にでも合う」と言われる定番機種。'
+    },
+    advice: '<strong>録音のポイント：</strong>マイクとの距離は拳1個分を目安に。近づきすぎると高域の刺さりがさらに強調されます。ゲインは -6dB〜-3dB の余裕を持たせてください。'
+  },
+  B: {
+    label: 'Type B',
+    title: '低音域・太い声質',
+    cssClass: 'type-b',
+    icon: '◆',
+    mic: {
+      name: 'AKG C214',
+      price: '約32,000〜38,000円',
+      reason: '中高域にハリがあり、太い声でも輪郭がしっかり前に出ます。男性ボーカルとの相性が特に高いと評判のスタジオ定番機種。'
+    },
+    advice: '<strong>録音のポイント：</strong>低域の膨らみを防ぐためにマイクとの距離を少し広めにとりましょう。フォーマットは必ず WAV 24bit/48kHz で。'
+  },
+  C: {
+    label: 'Type C',
+    title: 'ウィスパー・繊細な声質',
+    cssClass: 'type-c',
+    icon: '◇',
+    mic: {
+      name: 'LEWITT LCT 440 PURE',
+      price: '約30,000〜35,000円',
+      reason: '極めて低い自己ノイズと高い感度で、吐息・囁きの空気感をそのまま収音できます。繊細な声質にこの価格帯のベスト候補。'
+    },
+    advice: '<strong>録音のポイント：</strong>静音環境の確保が最優先です。エアコンや換気扇はオフに。感度が高いマイクほど環境ノイズも拾いやすくなります。'
+  }
+};
+
+function detectType(lp, mp, hp) {
+  if (hp >= 38) return 'A';
+  if (lp >= 40) return 'B';
+  if (lp < 30 && mp < 50 && hp < 35) return 'C';
+  if (lp >= 35) return 'B';
+  if (hp >= 30) return 'A';
+  return 'C';
+}
+
 function getComment(peakIdx, low, mid, high) {
   const total = low+mid+high||1;
   const lp=Math.round(low/total*100), mp=Math.round(mid/total*100), hp=Math.round(high/total*100);
@@ -375,6 +581,29 @@ function getComment(peakIdx, low, mid, high) {
   else if(hp>40) txt='<strong>高域が強め。</strong>明るく抜けのある声質です。力みがあると刺さりやすいので、息のサポートを意識してみてください。';
   else if(mp>55) txt='<strong>中域が豊か。</strong>声の芯がしっかり出ています。この中域の使い方が、表現の幅を広げるカギになります。';
   else txt='<strong>バランスのよい声質です。</strong>低・中・高域が均等に出ています。あとは表現の意図によって帯域を意識的にコントロールしていきましょう。';
+
+  const typeKey = detectType(lp, mp, hp);
+  const t = TYPE_DATA[typeKey];
+  const card = document.getElementById('result-card');
+  card.className = 'show ' + t.cssClass;
+  card.innerHTML =
+    '<div class="rc-header">' +
+      '<span class="rc-type-badge">' + t.label + '</span>' +
+      '<span class="rc-title">' + t.title + '</span>' +
+    '</div>' +
+    '<div class="rc-body">' +
+      '<div class="rc-mic">' +
+        '<div class="rc-mic-icon">' + t.icon + '</div>' +
+        '<div class="rc-mic-info">' +
+          '<div class="rc-mic-label">推奨マイク</div>' +
+          '<div class="rc-mic-name">' + t.mic.name + '</div>' +
+          '<div class="rc-mic-price">' + t.mic.price + '</div>' +
+          '<div class="rc-mic-reason">' + t.mic.reason + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rc-advice">' + t.advice + '</div>' +
+    '</div>';
+
   return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%</span>';
 }
 
@@ -482,6 +711,7 @@ function stop() {
   if(buffer){resize();drawWaveform(buffer);}
   timeEl.textContent='0:00 / '+fmtTime(buffer?.duration||0);
   commentEl.classList.remove('show');
+  document.getElementById('result-card').className = '';
   sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
 }
 
