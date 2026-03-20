@@ -320,6 +320,23 @@
     color: var(--text2);
     line-height: 1.6;
   }
+  .rc-amz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    color: #000;
+    background: #FF9900;
+    border-radius: 5px;
+    padding: 5px 12px;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: background 0.15s;
+  }
+  .rc-amz-btn:hover { background: #e68a00; }
   .rc-advice {
     font-size: 13px;
     color: var(--text2);
@@ -381,6 +398,66 @@
   .link-card.accent-hp .link-card-title { color: var(--accent); }
   .link-card.accent-diag .link-card-title { color: var(--info); }
 
+  /* mic recording */
+  #mic-section {
+    margin-bottom: 1rem;
+  }
+  #btn-mic {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px;
+    border-radius: 10px;
+    border: 1px dashed var(--border2);
+    background: var(--bg2);
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #btn-mic:hover { border-color: var(--info); color: var(--info); background: rgba(74,158,255,0.04); }
+  #btn-mic.recording { border-color: #e05555; color: #e05555; border-style: solid; background: rgba(224,85,85,0.06); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  #mic-status {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    margin-top: 8px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+  #mic-status.show { display: flex; }
+  #mic-countdown {
+    font-size: 22px;
+    font-weight: 500;
+    color: #e05555;
+    min-width: 28px;
+    text-align: right;
+  }
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 1rem 0;
+    color: var(--text3);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
   footer {
     text-align: center;
     padding: 1.5rem;
@@ -408,7 +485,24 @@
 
 <main>
   <h1>あなたの声を、<em>可視化</em>する。</h1>
-  <p class="subtitle">音声ファイルをアップロードすると、周波数スペクトラムと声質の傾向を分析します。</p>
+  <p class="subtitle">音声ファイルをアップロード、またはマイクで直接録音して声質を分析します。</p>
+
+  <div id="mic-section">
+    <button type="button" id="btn-mic">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+      <span id="btn-mic-label">マイクで録音して分析（サビを歌って止める）</span>
+      <span style="font-size:10px;font-family:var(--mono);background:rgba(232,168,56,0.2);color:var(--warn);border:1px solid rgba(232,168,56,0.4);border-radius:4px;padding:2px 6px;margin-left:4px;">β</span>
+    </button>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:6px;padding-left:2px;">※ リアルタイム分析のため、ファイルアップロードより精度が低くなる場合があります</p>
+    <div id="mic-status">
+      <span id="mic-status-text">録音中… サビを歌ってください</span>
+      <span id="mic-countdown">0s</span>
+    </div>
+  </div>
+
+  <div class="or-divider">または</div>
 
   <div id="dropzone" onclick="document.getElementById('fileinput').click()">
     <input type="file" id="fileinput" accept="audio/*">
@@ -418,7 +512,7 @@
       </svg>
     </div>
     <p class="drop-label">ファイルをドロップ、またはクリックして選択</p>
-    <p class="drop-sub">MP3 / WAV / M4A</p>
+    <p class="drop-sub">MP3 / WAV / M4A &nbsp;|&nbsp; <span style="color:var(--accent);">より精度の高い分析が可能です</span></p>
   </div>
 
   <div id="player">
@@ -429,7 +523,7 @@
   </div>
 
   <div id="viz">
-    <div class="viz-label">Waveform</div>
+    <div class="viz-label">Wave</div>
     <canvas id="waveform-canvas"></canvas>
     <div class="viz-label">Frequency Spectrum</div>
     <canvas id="spectrum-canvas"></canvas>
@@ -457,6 +551,36 @@
   <div id="comment"></div>
   <div id="result-card"></div>
 
+  <!-- シェア・連携パネル（診断結果が出たら表示） -->
+  <div id="share-panel" style="display:none; margin-top:16px;">
+
+    <!-- Xシェア + Discord -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <button type="button" id="btn-x-share" class="btn" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        結果をXでシェア
+      </button>
+      <a id="btn-discord" href="https://discord.gg/97bVp3fbX9" target="_blank" rel="noopener"
+         class="btn" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;text-decoration:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        Discordに参加
+      </a>
+    </div>
+
+    <!-- メール登録 -->
+    <div id="email-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+      <div style="font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:6px;">SAVE RESULT</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6;">診断結果をメールで受け取る（任意）。<br>aktMuseからのお知らせもお届けします。</div>
+      <div style="display:flex;gap:8px;">
+        <input type="email" id="email-input" placeholder="メールアドレス（任意）"
+               style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:var(--font);outline:none;">
+        <button type="button" id="btn-email-send" class="btn primary" style="white-space:nowrap;font-size:12px;">送信</button>
+      </div>
+      <div id="email-msg" style="font-size:12px;margin-top:8px;display:none;"></div>
+    </div>
+
+  </div>
+
   <div class="link-cards">
     <a class="link-card accent-hp" href="https://aktmix3.wixsite.com/website" target="_blank">
       <div class="link-card-label">制作者</div>
@@ -466,8 +590,8 @@
     </a>
     <a class="link-card accent-diag" href="https://huggingface.co/spaces/aktmix/v-diagnosis" target="_blank">
       <div class="link-card-label">関連ツール</div>
-      <div class="link-card-title">V診断</div>
-      <div class="link-card-desc">声質タイプをさらに詳しく診断。このアナライザーと組み合わせることで、自分の声の特性をより深く把握できます。</div>
+      <div class="link-card-title">AI歌診断</div>
+      <div class="link-card-desc">歌のピッチ・リズムをAIが診断。このアナライザーで声質を把握したあと、歌い方のクセや改善点を確認するのに最適です。</div>
       <div class="link-card-arrow">→ 診断を試す</div>
     </a>
   </div>
@@ -499,6 +623,7 @@ const sCtx = sCanvas.getContext('2d');
 
 let audioCtx, analyser, source, buffer;
 let playing = false, startTime = 0, pauseAt = 0, animId;
+let resultShown = false;
 
 function fmtTime(s) {
   const m = Math.floor(s/60);
@@ -534,7 +659,8 @@ const TYPE_DATA = {
     mic: {
       name: 'audio-technica AT4040',
       price: '約35,000円',
-      reason: '高域がマイルドで中低域に厚みがあり、サ行の刺さりを自然に抑えてくれます。歌い手の間で「誰にでも合う」と言われる定番機種。'
+      reason: '高域がマイルドで中低域に厚みがあり、サ行の刺さりを自然に抑えてくれます。歌い手の間で「誰にでも合う」と言われる定番機種。',
+      amazonUrl: 'https://amzn.to/40ED1iX'
     },
     advice: '<strong>録音のポイント：</strong>マイクとの距離は拳1個分を目安に。近づきすぎると高域の刺さりがさらに強調されます。ゲインは -6dB〜-3dB の余裕を持たせてください。'
   },
@@ -546,7 +672,8 @@ const TYPE_DATA = {
     mic: {
       name: 'AKG C214',
       price: '約32,000〜38,000円',
-      reason: '中高域にハリがあり、太い声でも輪郭がしっかり前に出ます。男性ボーカルとの相性が特に高いと評判のスタジオ定番機種。'
+      reason: '中高域にハリがあり、太い声でも輪郭がしっかり前に出ます。男性ボーカルとの相性が特に高いと評判のスタジオ定番機種。',
+      amazonUrl: 'https://amzn.to/3PvaAS0'
     },
     advice: '<strong>録音のポイント：</strong>低域の膨らみを防ぐためにマイクとの距離を少し広めにとりましょう。フォーマットは必ず WAV 24bit/48kHz で。'
   },
@@ -558,7 +685,8 @@ const TYPE_DATA = {
     mic: {
       name: 'LEWITT LCT 440 PURE',
       price: '約30,000〜35,000円',
-      reason: '極めて低い自己ノイズと高い感度で、吐息・囁きの空気感をそのまま収音できます。繊細な声質にこの価格帯のベスト候補。'
+      reason: '極めて低い自己ノイズと高い感度で、吐息・囁きの空気感をそのまま収音できます。繊細な声質にこの価格帯のベスト候補。',
+      amazonUrl: 'https://amzn.to/4bG8PZN'
     },
     advice: '<strong>録音のポイント：</strong>静音環境の確保が最優先です。エアコンや換気扇はオフに。感度が高いマイクほど環境ノイズも拾いやすくなります。'
   }
@@ -571,6 +699,11 @@ function detectType(lp, mp, hp) {
   if (lp >= 35) return 'B';
   if (hp >= 30) return 'A';
   return 'C';
+}
+
+function showSharePanel(typeKey, lp, mp, hp) {
+  currentResult = { type: typeKey, title: TYPE_DATA[typeKey].title, lo: lp, mid: mp, hi: hp };
+  document.getElementById('share-panel').style.display = 'block';
 }
 
 function getComment(peakIdx, low, mid, high) {
@@ -599,14 +732,16 @@ function getComment(peakIdx, low, mid, high) {
           '<div class="rc-mic-name">' + t.mic.name + '</div>' +
           '<div class="rc-mic-price">' + t.mic.price + '</div>' +
           '<div class="rc-mic-reason">' + t.mic.reason + '</div>' +
+          '<a class="rc-amz-btn" href="' + t.mic.amazonUrl + '" target="_blank" rel="noopener">&#x1F6CD; Amazonで見る</a>' +
         '</div>' +
       '</div>' +
       '<div class="rc-advice">' + t.advice + '</div>' +
     '</div>';
 
+  showSharePanel(typeKey, lp, mp, hp);
+
   return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%</span>';
 }
-
 function animate() {
   if(!analyser) return;
   animId = requestAnimationFrame(animate);
@@ -646,7 +781,8 @@ function animate() {
   document.getElementById('band-ratio').textContent=
     Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
 
-  if(peakVal>20){
+  if(peakVal>20 && !resultShown){
+    resultShown=true;
     commentEl.innerHTML=getComment(peakIdx,low,mid,high);
     commentEl.classList.add('show');
   }
@@ -669,6 +805,7 @@ function loadFile(file) {
     analyser.connect(audioCtx.destination);
   }
   filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
+  resultShown = false;
   player.classList.add('show');
   viz.classList.add('show');
   metrics.classList.add('show');
@@ -732,6 +869,9 @@ function stop() {
   timeEl.textContent='0:00 / '+fmtTime(buffer?.duration||0);
   commentEl.classList.remove('show');
   document.getElementById('result-card').className = '';
+  document.getElementById('share-panel').style.display = 'none';
+  document.getElementById('email-msg').style.display = 'none';
+  resultShown = false;
   sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
 }
 
@@ -771,6 +911,227 @@ wCanvas.addEventListener('touchmove',e=>{e.preventDefault();seekTo(e);},{passive
 
 window.addEventListener('resize',resize);
 resize();
+
+// ---- マイク録音 ----
+let micStream=null, micSource=null, micRecording=false;
+let micCountdownTimer=null, micAnimId=null;
+let micLowAcc=0, micMidAcc=0, micHighAcc=0, micFrames=0;
+let micElapsed=0, prevAnalyser=null;
+const MAX_MIC_SEC=20;
+const btnMic=document.getElementById('btn-mic');
+const btnMicLabel=document.getElementById('btn-mic-label');
+const micStatus=document.getElementById('mic-status');
+const micCountdownEl=document.getElementById('mic-countdown');
+
+function toggleMic(){
+  if(micRecording) stopMic(true);
+  else startMic();
+}
+
+async function startMic(){
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  }catch(e){
+    alert('マイクへのアクセスが許可されていません。\nブラウザの設定を確認してください。');
+    return;
+  }
+  if(!audioCtx) audioCtx=new AudioContext();
+
+  // マイク専用のanalyser（destinationに繋がない＝スピーカーに出力しない）
+  const micAnalyser=audioCtx.createAnalyser();
+  micAnalyser.fftSize=2048;
+  micAnalyser.smoothingTimeConstant=0.82;
+
+  micSource=audioCtx.createMediaStreamSource(micStream);
+  micSource.connect(micAnalyser);
+  // ★ destinationには繋がない → スピーカーに音が出ない
+
+  // animateMic用にグローバルなanalyser参照を一時的に差し替え
+  prevAnalyser=analyser;
+  analyser=micAnalyser;
+
+  micLowAcc=0; micMidAcc=0; micHighAcc=0; micFrames=0; micElapsed=0;
+  micRecording=true;
+  btnMic.classList.add('recording');
+  btnMicLabel.textContent='■ 歌い終わったら止める';
+  micStatus.classList.add('show');
+  micCountdownEl.textContent='0s';
+
+  viz.classList.add('show');
+  metrics.classList.add('show');
+  resize();
+
+  micCountdownTimer=setInterval(()=>{
+    micElapsed++;
+    micCountdownEl.textContent=micElapsed+'s';
+    if(micElapsed>=MAX_MIC_SEC){ clearInterval(micCountdownTimer); stopMic(true); }
+  },1000);
+
+  animateMic();
+}
+
+function animateMic(){
+  if(!micRecording) return;
+  micAnimId=requestAnimationFrame(animateMic);
+
+  // リアルタイム波形をファイル版と同じバー表示で描画
+  const timeData=new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(timeData);
+  const ww=wCanvas.width, wh=wCanvas.height;
+  wCtx.clearRect(0,0,ww,wh);
+  const step=Math.ceil(timeData.length/ww);
+  for(let x=0;x<ww;x++){
+    let min=128,max=128;
+    for(let j=0;j<step;j++){
+      const v=timeData[x*step+j]||128;
+      if(v<min)min=v;
+      if(v>max)max=v;
+    }
+    const y1=Math.round((min/255)*wh);
+    const y2=Math.round((max/255)*wh);
+    wCtx.fillStyle='#1DB954';
+    wCtx.fillRect(x, y1, 1, Math.max(1, y2-y1));
+  }
+
+  const freq=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freq);
+  const w=sCanvas.width, h=sCanvas.height;
+  sCtx.clearRect(0,0,w,h);
+  const barW=Math.floor(w/BANDS.length);
+  const nyq=audioCtx.sampleRate/2;
+  let peakIdx=0,peakVal=0,low=0,mid=0,high=0,lvlSum=0;
+
+  BANDS.forEach((hz,i)=>{
+    const bin=Math.round(hz/nyq*analyser.frequencyBinCount);
+    const nextBin=i<BANDS.length-1?Math.round(BANDS[i+1]/nyq*analyser.frequencyBinCount):analyser.frequencyBinCount;
+    let sum=0,cnt=0;
+    for(let b=bin;b<nextBin&&b<freq.length;b++){sum+=freq[b];cnt++;}
+    const avg=cnt?sum/cnt:0;
+    lvlSum+=avg;
+    const ratio=avg/255;
+    const barH=Math.round(ratio*h);
+    const x=i*barW+2,bw=barW-4;
+    const r=Math.round(29+(220-29)*ratio);
+    const g=Math.round(185+(100-185)*ratio);
+    const bl=Math.round(84+(20-84)*ratio);
+    sCtx.fillStyle=`rgba(${r},${g},${bl},0.9)`;
+    sCtx.beginPath();
+    sCtx.roundRect(x,h-barH,bw,Math.max(barH,2),[3,3,0,0]);
+    sCtx.fill();
+    if(avg>peakVal){peakVal=avg;peakIdx=i;}
+    if(i<3)low+=avg; else if(i<6)mid+=avg; else high+=avg;
+  });
+
+  const lvlDb=Math.round(20*Math.log10(lvlSum/BANDS.length/255+0.001));
+  document.getElementById('peak-band').textContent=BAND_NAMES[peakIdx];
+  document.getElementById('level-val').textContent=lvlDb+' dB';
+  const total=low+mid+high||1;
+  document.getElementById('band-ratio').textContent=
+    Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
+
+  if(peakVal>10){
+    micLowAcc+=low; micMidAcc+=mid; micHighAcc+=high; micFrames++;
+  }
+}
+
+function stopMic(doJudge=false){
+  micRecording=false;
+  cancelAnimationFrame(micAnimId);
+  clearInterval(micCountdownTimer);
+
+  // 最後の波形をスナップショットとして残す
+  if(analyser){
+    const timeData=new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(timeData);
+    const ww=wCanvas.width, wh=wCanvas.height;
+    wCtx.clearRect(0,0,ww,wh);
+    const step=Math.ceil(timeData.length/ww);
+    for(let x=0;x<ww;x++){
+      let min=128,max=128;
+      for(let j=0;j<step;j++){
+        const v=timeData[x*step+j]||128;
+        if(v<min)min=v;
+        if(v>max)max=v;
+      }
+      const y1=Math.round((min/255)*wh);
+      const y2=Math.round((max/255)*wh);
+      wCtx.fillStyle='#1DB954';
+      wCtx.fillRect(x, y1, 1, Math.max(1, y2-y1));
+    }
+  }
+
+  if(micSource){ micSource.disconnect(); micSource=null; }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  // analyserをファイル再生用（destination接続済み）に戻す
+  analyser=prevAnalyser;
+  prevAnalyser=null;
+
+  btnMic.classList.remove('recording');
+  btnMicLabel.textContent='マイクで録音して分析（サビを歌って止める）';
+  micStatus.classList.remove('show');
+
+  if(doJudge && micFrames>0){
+    const comment=document.getElementById('comment');
+    comment.innerHTML=getComment(0, micLowAcc/micFrames, micMidAcc/micFrames, micHighAcc/micFrames);
+    comment.classList.add('show');
+  }
+}
+
+// ---- 設定（後で差し替え） ----
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgazvpk';
+const DISCORD_URL = 'https://discord.gg/97bVp3fbX9';
+
+// DiscordボタンのhrefをJSで設定
+document.getElementById('btn-discord').href = DISCORD_URL;
+
+// ---- シェアパネル制御 ----
+let currentResult = { type:'', title:'', lo:0, mid:0, hi:0 };
+
+// Xシェア
+document.getElementById('btn-x-share').addEventListener('click', () => {
+  const t = currentResult;
+  const text = `【声質診断結果】\nType ${t.type}：${t.title}\n低域 ${t.lo}% / 中域 ${t.mid}% / 高域 ${t.hi}%\n#aktMuse声診断 @aktmix\nhttps://akt1980.github.io/vocal-analyzer/analyzer.html`;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener');
+});
+
+// メール送信
+document.getElementById('btn-email-send').addEventListener('click', async () => {
+  const email = document.getElementById('email-input').value.trim();
+  const msgEl = document.getElementById('email-msg');
+  if(!email || !email.includes('@')) {
+    msgEl.style.display = 'block';
+    msgEl.style.color = 'var(--warn)';
+    msgEl.textContent = 'メールアドレスを正しく入力してください。';
+    return;
+  }
+  const t = currentResult;
+  const body = {
+    email,
+    _subject: '【aktMuse声質診断】あなたの結果',
+    message: `診断タイプ：Type ${t.type}（${t.title}）\n低域 ${t.lo}% / 中域 ${t.mid}% / 高域 ${t.hi}%\n推奨マイク：${TYPE_DATA[t.type]?.mic?.name || ''}`
+  };
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(res.ok) {
+      msgEl.style.display = 'block';
+      msgEl.style.color = 'var(--accent)';
+      msgEl.textContent = '送信しました。結果をメールでお届けします。';
+      document.getElementById('email-input').value = '';
+    } else {
+      throw new Error();
+    }
+  } catch {
+    msgEl.style.display = 'block';
+    msgEl.style.color = 'var(--warn)';
+    msgEl.textContent = '送信に失敗しました。しばらくしてからお試しください。';
+  }
+});
+
+btnMic.addEventListener('click', toggleMic);
 </script>
 </body>
 </html>
