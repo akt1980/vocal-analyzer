@@ -86,7 +86,6 @@
     margin-bottom: 2.5rem;
   }
 
-  /* dropzone */
   #dropzone {
     border: 1px dashed var(--border2);
     border-radius: 12px;
@@ -114,7 +113,6 @@
   .drop-label { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
   .drop-sub { font-size: 12px; color: var(--text3); font-family: var(--mono); }
 
-  /* player bar */
   #player {
     display: none;
     align-items: center;
@@ -153,7 +151,6 @@
   .btn.primary:hover { background: #23d45e; }
   #time { font-family: var(--mono); font-size: 12px; color: var(--text3); white-space: nowrap; }
 
-  /* viz area */
   #viz { display: none; }
   #viz.show { display: block; }
 
@@ -187,7 +184,6 @@
     font-family: var(--mono);
   }
 
-  /* metrics */
   #metrics {
     display: none;
     grid-template-columns: repeat(3, 1fr);
@@ -217,7 +213,6 @@
   }
   .metric-value.accent { color: var(--accent); }
 
-  /* comment */
   #comment {
     display: none;
     padding: 16px 20px;
@@ -239,7 +234,6 @@
     font-family: var(--mono);
   }
 
-  /* result card */
   #result-card {
     display: none;
     margin-top: 12px;
@@ -348,7 +342,6 @@
   }
   .rc-advice strong { color: var(--text); font-weight: 500; }
 
-  /* link cards */
   .link-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -398,10 +391,7 @@
   .link-card.accent-hp .link-card-title { color: var(--accent); }
   .link-card.accent-diag .link-card-title { color: var(--info); }
 
-  /* mic recording */
-  #mic-section {
-    margin-bottom: 1rem;
-  }
+  #mic-section { margin-bottom: 1rem; }
   #btn-mic {
     width: 100%;
     display: flex;
@@ -552,10 +542,7 @@
   <div id="comment"></div>
   <div id="result-card"></div>
 
-  <!-- シェア・連携パネル（診断結果が出たら表示） -->
   <div id="share-panel" style="display:none; margin-top:16px;">
-
-    <!-- Xシェア + Discord -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
       <button type="button" id="btn-x-share" class="btn" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -568,7 +555,6 @@
       </a>
     </div>
 
-    <!-- メール登録 -->
     <div id="email-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
       <div style="font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:6px;">CONTACT</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6;">診断結果をaktMuseに送信して、フィードバックをもらう（任意）。<br>お知らせの受け取りにも使えます。</div>
@@ -579,7 +565,6 @@
       </div>
       <div id="email-msg" style="font-size:12px;margin-top:8px;display:none;"></div>
     </div>
-
   </div>
 
   <div class="link-cards">
@@ -695,12 +680,13 @@ const TYPE_DATA = {
   }
 };
 
+// ★修正② detectType の閾値を調整
 function detectType(lp, mp, hp) {
-  if (hp >= 38) return 'A';
+  if (hp >= 35) return 'A';
+  if (lp >= 50) return 'B';
+  if (mp >= 55) return 'C';
   if (lp >= 40) return 'B';
-  if (lp < 30 && mp < 50 && hp < 35) return 'C';
-  if (lp >= 35) return 'B';
-  if (hp >= 30) return 'A';
+  if (hp >= 28) return 'A';
   return 'C';
 }
 
@@ -746,6 +732,7 @@ function getComment(peakIdx, low, mid, high) {
 
   return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%</span>';
 }
+
 function animate() {
   if(!analyser) return;
   animId = requestAnimationFrame(animate);
@@ -775,7 +762,8 @@ function animate() {
     sCtx.roundRect(x, h-barH, bw, Math.max(barH,2), [3,3,0,0]);
     sCtx.fill();
     if(avg>peakVal){peakVal=avg;peakIdx=i;}
-    if(i<3)low+=avg; else if(i<6)mid+=avg; else high+=avg;
+    // ★修正① バンド分割：低域2本・中域4本・高域3本
+    if(i<2)low+=avg; else if(i<6)mid+=avg; else high+=avg;
   });
 
   const lvlDb=Math.round(20*Math.log10(lvlSum/BANDS.length/255+0.001));
@@ -883,7 +871,6 @@ dropzone.ondragover=e=>{e.preventDefault();dropzone.classList.add('drag');};
 dropzone.ondragleave=()=>dropzone.classList.remove('drag');
 dropzone.ondrop=e=>{e.preventDefault();dropzone.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);};
 
-// waveformクリック・ドラッグで再生位置変更
 wCanvas.style.cursor='pointer';
 let isDragging=false;
 
@@ -938,16 +925,13 @@ async function startMic(){
   }
   if(!audioCtx) audioCtx=new AudioContext();
 
-  // マイク専用のanalyser（destinationに繋がない＝スピーカーに出力しない）
   const micAnalyser=audioCtx.createAnalyser();
   micAnalyser.fftSize=2048;
   micAnalyser.smoothingTimeConstant=0.82;
 
   micSource=audioCtx.createMediaStreamSource(micStream);
   micSource.connect(micAnalyser);
-  // ★ destinationには繋がない → スピーカーに音が出ない
 
-  // animateMic用にグローバルなanalyser参照を一時的に差し替え
   prevAnalyser=analyser;
   analyser=micAnalyser;
 
@@ -975,7 +959,6 @@ function animateMic(){
   if(!micRecording) return;
   micAnimId=requestAnimationFrame(animateMic);
 
-  // リアルタイム波形をファイル版と同じバー表示で描画
   const timeData=new Uint8Array(analyser.fftSize);
   analyser.getByteTimeDomainData(timeData);
   const ww=wCanvas.width, wh=wCanvas.height;
@@ -1020,7 +1003,8 @@ function animateMic(){
     sCtx.roundRect(x,h-barH,bw,Math.max(barH,2),[3,3,0,0]);
     sCtx.fill();
     if(avg>peakVal){peakVal=avg;peakIdx=i;}
-    if(i<3)low+=avg; else if(i<6)mid+=avg; else high+=avg;
+    // ★修正① マイク録音側も同じバンド分割に統一
+    if(i<2)low+=avg; else if(i<6)mid+=avg; else high+=avg;
   });
 
   const lvlDb=Math.round(20*Math.log10(lvlSum/BANDS.length/255+0.001));
@@ -1040,7 +1024,6 @@ function stopMic(doJudge=false){
   cancelAnimationFrame(micAnimId);
   clearInterval(micCountdownTimer);
 
-  // 最後の波形をスナップショットとして残す
   if(analyser){
     const timeData=new Uint8Array(analyser.fftSize);
     analyser.getByteTimeDomainData(timeData);
@@ -1063,7 +1046,6 @@ function stopMic(doJudge=false){
 
   if(micSource){ micSource.disconnect(); micSource=null; }
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
-  // analyserをファイル再生用（destination接続済み）に戻す
   analyser=prevAnalyser;
   prevAnalyser=null;
 
@@ -1085,21 +1067,16 @@ const EMAILJS_PUBLIC_KEY  = '-uQSHHs0d-dt0fwje';
 const DISCORD_URL = 'https://discord.gg/97bVp3fbX9';
 
 emailjs.init(EMAILJS_PUBLIC_KEY);
-
-// DiscordボタンのhrefをJSで設定
 document.getElementById('btn-discord').href = DISCORD_URL;
 
-// ---- シェアパネル制御 ----
 let currentResult = { type:'', title:'', lo:0, mid:0, hi:0 };
 
-// Xシェア
 document.getElementById('btn-x-share').addEventListener('click', () => {
   const t = currentResult;
   const text = `【声質診断結果】\nType ${t.type}：${t.title}\n低域 ${t.lo}% / 中域 ${t.mid}% / 高域 ${t.hi}%\n#aktMuse声診断 @aktmix\nhttps://akt1980.github.io/vocal-analyzer/analyzer.html`;
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener');
 });
 
-// メール送信（EmailJS）
 document.getElementById('btn-email-send').addEventListener('click', async () => {
   const email = document.getElementById('email-input').value.trim();
   const msgEl = document.getElementById('email-msg');
