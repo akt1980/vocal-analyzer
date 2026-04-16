@@ -683,9 +683,9 @@ const TYPE_DATA = {
 // ★修正② detectType の閾値を調整
 function detectType(lp, mp, hp) {
   if (hp >= 35) return 'A';
-  if (lp >= 50) return 'B';
+  if (lp >= 45) return 'B';
   if (mp >= 55) return 'C';
-  if (lp >= 40) return 'B';
+  if (lp >= 30) return 'B';
   if (hp >= 28) return 'A';
   return 'C';
 }
