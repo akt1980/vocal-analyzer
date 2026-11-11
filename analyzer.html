@@ -496,7 +496,7 @@
   <div class="or-divider">または</div>
 
   <div id="dropzone" onclick="document.getElementById('fileinput').click()">
-    <input type="file" id="fileinput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac">
+    <input type="file" id="fileinput" accept="audio/*">
     <div class="drop-icon">
       <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
@@ -683,9 +683,9 @@ const TYPE_DATA = {
 // ★修正② detectType の閾値を調整
 function detectType(lp, mp, hp) {
   if (hp >= 35) return 'A';
-  if (lp >= 45) return 'B';
+  if (lp >= 50) return 'B';
   if (mp >= 55) return 'C';
-  if (lp >= 30) return 'B';
+  if (lp >= 40) return 'B';
   if (hp >= 28) return 'A';
   return 'C';
 }
