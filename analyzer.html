@@ -342,6 +342,22 @@
   }
   .rc-advice strong { color: var(--text); font-weight: 500; }
 
+  /* 追加：あわせて揃えたい・MIX導線・広告表記 */
+  .rc-section-label { font-size: 10px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.08em; margin: 14px 0 6px; }
+  .rc-goods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  @media (max-width: 480px) { .rc-goods { grid-template-columns: 1fr; } }
+  .rc-good { display: block; padding: 10px 12px; border-radius: 8px; background: var(--bg3); border: 1px solid var(--border); text-decoration: none; transition: border-color 0.2s; }
+  .rc-good:hover { border-color: var(--border2); }
+  .rc-good-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .rc-good-why { font-size: 11px; color: var(--text2); line-height: 1.5; }
+  .rc-cta { margin-top: 14px; padding: 14px; border-radius: 8px; border: 1px solid rgba(29,185,84,0.3); background: rgba(29,185,84,0.06); }
+  .rc-cta-text { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+  .rc-cta-text strong { color: var(--text); font-weight: 500; }
+  .rc-cta-btn { display: inline-block; font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: 6px; background: var(--accent); color: #000; text-decoration: none; }
+  .rc-cta-btn:hover { background: #23d45e; }
+  .rc-pr { margin-top: 12px; font-size: 10px; color: var(--text3); font-family: var(--mono); line-height: 1.6; }
+  .pr-note { display: block; margin-top: 4px; font-size: 11px; color: var(--text3); }
+
   .link-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -476,7 +492,7 @@
 
 <main>
   <h1>あなたの声を、<em>可視化</em>する。</h1>
-  <p class="subtitle">音声ファイルをアップロード、またはマイクで直接録音して声質を分析します。</p>
+  <p class="subtitle">音声ファイルをアップロード、またはマイクで直接録音して声質を分析します。<span class="pr-note">※本ページはアフィリエイト広告（Amazonアソシエイト）を利用しています。</span></p>
 
   <div id="mic-section">
     <button type="button" id="btn-mic">
@@ -496,7 +512,7 @@
   <div class="or-divider">または</div>
 
   <div id="dropzone" onclick="document.getElementById('fileinput').click()">
-    <input type="file" id="fileinput" accept="audio/*">
+    <input type="file" id="fileinput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac">
     <div class="drop-icon">
       <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
@@ -635,6 +651,29 @@ function drawWaveform(buf) {
   }
 }
 
+// ===== 広告・導線の設定（ここだけ書き換えればOK） =====
+const AMAZON_TAG  = 'akaton69-22'; // ← AmazonアソシエイトのトラッキングID
+const SERVICE_URL = 'https://aktmix3.wixsite.com/website/services-7'; // 二人三脚パック
+const amz = q => 'https://www.amazon.co.jp/s?k=' + encodeURIComponent(q) + '&tag=' + AMAZON_TAG;
+
+// あわせて揃えたい（1枠目はタイプ別、2・3枠目は共通）
+const TYPE_GOODS = {
+  A: { name: 'ポップガード', why: '近接時のサ行・破裂音の刺さり対策', url: amz('ポップガード マイク') },
+  B: { name: 'リフレクションフィルター', why: '部屋鳴りによる低域のこもり対策', url: amz('リフレクションフィルター') },
+  C: { name: '吸音材', why: '環境ノイズ・反響を抑えて囁きを鮮明に', url: amz('吸音材 録音') }
+};
+const COMMON_GOODS = [
+  { name: 'オーディオインターフェース', why: 'コンデンサーマイクの接続に必須', url: amz('オーディオインターフェース') },
+  { name: 'モニターヘッドホン', why: '録音時のモニタリング用', url: amz('モニターヘッドホン 密閉型') }
+];
+
+// タイプ別 MIX導線
+const TYPE_CTA = {
+  A: '<strong>高域の刺さりは、MIXで「削りすぎない」調整がカギ。</strong>明るさを残したまま、耳に痛くない仕上がりにします。',
+  B: '<strong>太い声ほど、オケの中で埋もれやすい。</strong>輪郭を前に出して、存在感のある歌に仕上げます。',
+  C: '<strong>繊細な声は、ノイズ処理と空気感の両立が勝負。</strong>吐息のニュアンスを残したまま聴きやすく整えます。'
+};
+
 const TYPE_DATA = {
   A: {
     label: 'Type A',
@@ -683,9 +722,9 @@ const TYPE_DATA = {
 // ★修正② detectType の閾値を調整
 function detectType(lp, mp, hp) {
   if (hp >= 35) return 'A';
-  if (lp >= 50) return 'B';
+  if (lp >= 45) return 'B';
   if (mp >= 55) return 'C';
-  if (lp >= 40) return 'B';
+  if (lp >= 30) return 'B';
   if (hp >= 28) return 'A';
   return 'C';
 }
@@ -695,17 +734,11 @@ function showSharePanel(typeKey, lp, mp, hp) {
   document.getElementById('share-panel').style.display = 'block';
 }
 
-function getComment(peakIdx, low, mid, high) {
-  const total = low+mid+high||1;
-  const lp=Math.round(low/total*100), mp=Math.round(mid/total*100), hp=Math.round(high/total*100);
-  let txt = '';
-  if(lp>45) txt='<strong>低域が厚め。</strong>胸声が豊かに出ています。ブレスと一緒に音が膨らみすぎていないか確認してみましょう。';
-  else if(hp>40) txt='<strong>高域が強め。</strong>明るく抜けのある声質です。力みがあると刺さりやすいので、息のサポートを意識してみてください。';
-  else if(mp>55) txt='<strong>中域が豊か。</strong>声の芯がしっかり出ています。この中域の使い方が、表現の幅を広げるカギになります。';
-  else txt='<strong>バランスのよい声質です。</strong>低・中・高域が均等に出ています。あとは表現の意図によって帯域を意識的にコントロールしていきましょう。';
+let shownType = null;
 
-  const typeKey = detectType(lp, mp, hp);
+function renderCard(typeKey) {
   const t = TYPE_DATA[typeKey];
+  const goods = [TYPE_GOODS[typeKey], ...COMMON_GOODS];
   const card = document.getElementById('result-card');
   card.className = 'show ' + t.cssClass;
   card.innerHTML =
@@ -719,19 +752,50 @@ function getComment(peakIdx, low, mid, high) {
         '<div class="rc-mic-info">' +
           '<div class="rc-mic-label">推奨マイク</div>' +
           '<div class="rc-mic-name">' + t.mic.name + '</div>' +
-          '<div class="rc-mic-price">' + t.mic.price + '</div>' +
+          '<div class="rc-mic-price">参考価格 ' + t.mic.price + '（変動あり）</div>' +
           '<div class="rc-mic-reason">' + t.mic.reason + '</div>' +
-          '<a class="rc-amz-btn" href="' + t.mic.amazonUrl + '" target="_blank" rel="noopener">&#x1F6CD; Amazonで見る</a>' +
+          '<a class="rc-amz-btn" href="' + t.mic.amazonUrl + '" target="_blank" rel="sponsored noopener">&#x1F6CD; Amazonで見る</a>' +
           '<a class="rc-amz-btn" href="' + t.mic.soundhouseUrl + '" target="_blank" rel="noopener" style="background:#1a56a0;margin-left:6px;">&#x1F3B5; サウンドハウス</a>' +
         '</div>' +
       '</div>' +
       '<div class="rc-advice">' + t.advice + '</div>' +
+      '<div class="rc-section-label">あわせて揃えたい</div>' +
+      '<div class="rc-goods">' +
+        goods.map(g =>
+          '<a class="rc-good" href="' + g.url + '" target="_blank" rel="sponsored noopener">' +
+            '<div class="rc-good-name">' + g.name + ' →</div>' +
+            '<div class="rc-good-why">' + g.why + '</div>' +
+          '</a>').join('') +
+      '</div>' +
+      '<div class="rc-cta">' +
+        '<div class="rc-cta-text">' + TYPE_CTA[typeKey] + '<br>450件以上のMIX実績をもとに、録音からMIXまで伴走します。</div>' +
+        '<a class="rc-cta-btn" href="' + SERVICE_URL + '" target="_blank" rel="noopener">二人三脚パックを見る →</a>' +
+      '</div>' +
+      '<div class="rc-pr">※リンクの一部はアフィリエイト広告です。Amazonのアソシエイトとして、aktMuseは適格販売により収入を得ています。</div>' +
     '</div>';
+}
 
+// low/mid/high は「平均済み」の値を渡す
+function getComment(peakIdx, low, mid, high, note) {
+  const total = low+mid+high||1;
+  const lp=Math.round(low/total*100), mp=Math.round(mid/total*100), hp=Math.round(high/total*100);
+  let txt = '';
+  if(lp>45) txt='<strong>低域が厚め。</strong>胸声が豊かに出ています。ブレスと一緒に音が膨らみすぎていないか確認してみましょう。';
+  else if(hp>40) txt='<strong>高域が強め。</strong>明るく抜けのある声質です。力みがあると刺さりやすいので、息のサポートを意識してみてください。';
+  else if(mp>55) txt='<strong>中域が豊か。</strong>声の芯がしっかり出ています。この中域の使い方が、表現の幅を広げるカギになります。';
+  else txt='<strong>バランスのよい声質です。</strong>低・中・高域が均等に出ています。あとは表現の意図によって帯域を意識的にコントロールしていきましょう。';
+
+  const typeKey = detectType(lp, mp, hp);
+  if (typeKey !== shownType) { renderCard(typeKey); shownType = typeKey; }
   showSharePanel(typeKey, lp, mp, hp);
 
-  return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%</span>';
+  return txt + '<span class="sub">低域 '+lp+'% &nbsp;/&nbsp; 中域 '+mp+'% &nbsp;/&nbsp; 高域 '+hp+'%' + (note||'') + '</span>';
 }
+
+// ファイル再生：曲全体の平均で判定（瞬間値で結果がブレないように）
+let fileAcc = { low:0, mid:0, high:0, frames:0 };
+const JUDGE_MIN_FRAMES = 180; // 約3秒たまるまで判定を保留
+function resetFileAcc(){ fileAcc = { low:0, mid:0, high:0, frames:0 }; shownType = null; }
 
 function animate() {
   if(!analyser) return;
@@ -773,9 +837,13 @@ function animate() {
   document.getElementById('band-ratio').textContent=
     Math.round(low/total*100)+'%  '+Math.round(mid/total*100)+'%  '+Math.round(high/total*100)+'%';
 
-  if(peakVal>20){
-    commentEl.innerHTML=getComment(peakIdx,low,mid,high);
-    commentEl.classList.add('show');
+  if(playing && peakVal>20){
+    fileAcc.low+=low; fileAcc.mid+=mid; fileAcc.high+=high; fileAcc.frames++;
+    if(fileAcc.frames>=JUDGE_MIN_FRAMES){
+      const n=fileAcc.frames;
+      commentEl.innerHTML=getComment(peakIdx, fileAcc.low/n, fileAcc.mid/n, fileAcc.high/n, ' &nbsp;（再生した区間の平均）');
+      commentEl.classList.add('show');
+    }
   }
 
   if(playing&&buffer){
@@ -795,6 +863,10 @@ function loadFile(file) {
     analyser.smoothingTimeConstant=0.82;
     analyser.connect(audioCtx.destination);
   }
+  resetFileAcc();
+  commentEl.classList.remove('show');
+  document.getElementById('result-card').className='';
+  document.getElementById('share-panel').style.display='none';
   filenameEl.textContent=file.name.length>32?file.name.slice(0,30)+'…':file.name;
   player.classList.add('show');
   viz.classList.add('show');
@@ -813,7 +885,8 @@ function loadFile(file) {
 
 function play() {
   if(!buffer||playing) return;
-  source=audioCtx.createBufferSource();
+  const src=audioCtx.createBufferSource();
+  source=src;
   source.buffer=buffer;
   source.connect(analyser);
   source.start(0,pauseAt);
@@ -828,7 +901,7 @@ function play() {
       btnPlay.textContent='再生';
       btnPlay.classList.remove('primary');
     }
-    source.disconnect();
+    src.disconnect();
   };
   animate();
 }
@@ -857,9 +930,6 @@ function stop() {
   cancelAnimationFrame(animId);
   if(buffer){resize();drawWaveform(buffer);}
   timeEl.textContent='0:00 / '+fmtTime(buffer?.duration||0);
-  commentEl.classList.remove('show');
-  document.getElementById('result-card').className = '';
-  document.getElementById('share-panel').style.display = 'none';
   document.getElementById('email-msg').style.display = 'none';
   sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
 }
@@ -936,6 +1006,7 @@ async function startMic(){
   analyser=micAnalyser;
 
   micLowAcc=0; micMidAcc=0; micHighAcc=0; micFrames=0; micElapsed=0;
+  shownType=null;
   micRecording=true;
   btnMic.classList.add('recording');
   btnMicLabel.textContent='■ 歌い終わったら止める';
